@@ -4,29 +4,39 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-#define MAX_COMMAND_LENGTH 70
-
+#define MAX_COMMAND_LENGTH 150
 /**
- * main - Main Entery point
- * Return: Return 0 (Success) else -1 if false)
+ * main - Main entry point
+ * Return: Return 0 (On Success)
  */
+
 int main(void)
 {
-	char command[MAX_COMMAND_LENGTH];
-	char *args[2];
+	ssize_t read;
+	char *args[10]; /*Increase the size*/
 
 	while (1)
 	{
 		printf("simple_shell> ");
-		if (fgets(command, MAX_COMMAND_LENGTH, stdin) == NULL)
+
+		if ((read = getline(&command, &len, stdin)) == -1)
 		{
 			printf("\n");
+			free(command); /*Free dynamically allocated memory*/
 			break;
 		}
-		command[strcspn(command, "\n")] = 0;
-		args[0] = command;
-		args[1] = NULL;
 
+		command[strcspn(command, "\n")] = '\0';
+
+		char *token = strtok(command, " ");
+		int i = 0;
+
+		while (token != NULL && i < 10)
+		{
+			args[i++] = token;
+			token = strtok(NULL, " ");
+		}
+		args[i] = NULL;
 		pid_t pid = fork();
 
 		if (pid == -1)
@@ -36,8 +46,8 @@ int main(void)
 		}
 		else if (pid == 0)
 		{
-			execve(args[0], args, NULL);
-			perror("execve");
+			execvp(args[0], args);
+			perror("execvp");
 			exit(EXIT_FAILURE);
 		}
 		else
